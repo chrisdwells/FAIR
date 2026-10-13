@@ -28,4 +28,8 @@ SPECIES_CONFIGS_EXCL_GASBOX = [
     "fractional_release",
     "ch4_lifetime_chemical_sensitivity",
     "aci_shape",
+    "erfariavi_linear_radiative_efficiency",
+	"erfariavi_nonlinear_radiative_efficiency",
+	"erfaciavi_linear_radiative_efficiency",
+    "erfaciavi_nonlinear_radiative_efficiency",
 ]

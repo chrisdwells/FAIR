@@ -26,6 +26,8 @@ species_types = [
     "volcanic",
     "solar",
     "unspecified",
+    "ari aviation",
+    "aci aviation",
 ]
 
 #: Valid run modes for each species.
@@ -54,7 +56,9 @@ valid_input_modes = {
     "volcanic": ["forcing"],
     "solar": ["forcing"],
     "unspecified": ["forcing"],
-}
+    "ari aviation": ["calculated", "forcing"],
+    "aci aviation": ["calculated", "forcing"],
+    }
 
 #: Whether multiple instances are allowed for each specie type.
 multiple_allowed = {
@@ -66,8 +70,8 @@ multiple_allowed = {
     "cfc-11": False,
     "other halogen": True,
     "f-gas": True,
-    "sulfur": False,
-    "black carbon": False,
+    "sulfur": True,
+    "black carbon": True,
     "organic carbon": False,
     "other slcf": True,
     "nox aviation": False,
@@ -82,4 +86,6 @@ multiple_allowed = {
     "volcanic": False,
     "solar": False,
     "unspecified": True,
+    "ari aviation": False,
+    "aci aviation": False,
 }

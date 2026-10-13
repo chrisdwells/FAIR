@@ -250,6 +250,8 @@ def fill_from_rcmip(self):
     species_to_rcmip["CO2 FFI"] = "CO2|MAGICC Fossil and Industrial"
     species_to_rcmip["CO2 AFOLU"] = "CO2|MAGICC AFOLU"
     species_to_rcmip["NOx aviation"] = "NOx|MAGICC Fossil and Industrial|Aircraft"
+    species_to_rcmip["Sulfur aviation"] = "Sulfur|MAGICC Fossil and Industrial|Aircraft"
+    species_to_rcmip["BC aviation"] = "BC|MAGICC Fossil and Industrial|Aircraft"
     species_to_rcmip["Aerosol-radiation interactions"] = (
         "Aerosols-radiation interactions"
     )
@@ -258,7 +260,7 @@ def fill_from_rcmip(self):
     species_to_rcmip["Light absorbing particles on snow and ice"] = "BC on Snow"
     species_to_rcmip["Stratospheric water vapour"] = "CH4 Oxidation Stratospheric H2O"
     species_to_rcmip["Land use"] = "Albedo Change"
-
+    
     species_to_rcmip_copy = copy.deepcopy(species_to_rcmip)
 
     for specie in species_to_rcmip_copy:
@@ -462,3 +464,26 @@ def fill_from_rcmip(self):
 
                 # fill FaIR xarray
                 fill(self.forcing, forc[:, None], specie=specie, scenario=scenario)
+
+        # if we have aviation-specific treatment on then we subtract
+        # from the general ones. this doesn't need to be done if the 
+        # aviation treatment isn't on, even for NOx aviation, as this 
+        # is only included in the other case to emulate contrails
+                
+        if self.aviation:
+            aviation_map = {
+                "NOx aviation": "NOx",
+                "BC aviation": "BC",
+                "Sulfur aviation": "Sulfur",
+            }
+        
+            for aviation_species, parent_species in aviation_map.items():
+                if (
+                    aviation_species in self.species
+                    and parent_species in self.species
+                ):
+                    self.emissions.loc[
+                        dict(specie=parent_species, scenario=scenario)
+                    ] -= self.emissions.loc[
+                        dict(specie=aviation_species, scenario=scenario)
+                    ]         
