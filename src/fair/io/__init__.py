@@ -89,18 +89,18 @@ def read_properties(filename=DEFAULT_PROPERTIES_FILE, species=None, aviation=Fal
         species properties that control the FaIR run
     """
     df = pd.read_csv(filename, index_col=0)
-    
+
     if not aviation:
         aviation_species = [
-            #"NOx aviation",
+            # "NOx aviation",
             "Sulfur aviation",
             "BC aviation",
-            #"Contrails",
+            # "Contrails",
             "Aerosol-radiation interactions aviation",
             "Aerosol-cloud interactions aviation",
         ]
         df = df.loc[~df.index.isin(aviation_species)]
-    
+
     if species is None:
         species = list(df.index)
 
@@ -136,14 +136,13 @@ def read_properties(filename=DEFAULT_PROPERTIES_FILE, species=None, aviation=Fal
             "Sulfur aviation",
             "BC aviation",
         ]
-        
-        aviation_species = [s for s in species if s in potential_aviation_emission_species]
-    
-        general_species = [
-            s for s in species
-            if s not in aviation_species
+
+        aviation_species = [
+            s for s in species if s in potential_aviation_emission_species
         ]
-    
+
+        general_species = [s for s in species if s not in aviation_species]
+
         species = general_species + aviation_species
-        
+
     return species, properties

@@ -13,7 +13,8 @@ def calculate_erfariavi_forcing(
     linear_emissions_indices,
     nonlinear_emissions_indices,
 ):
-    r"""Calculate effective radiative forcing from aerosol-radiation interactions from aviation.
+    r"""Calculate effective radiative forcing from aerosol-radiation
+    interactions from aviation.
 
     Parameters
     ----------
@@ -34,21 +35,22 @@ def calculate_erfariavi_forcing(
     Returns
     -------
     effective_radiative_forcing : np.ndarray
-        effective radiative forcing (W m\ :sup:`-2`) from aerosol-radiation interactions from aviation
+        effective radiative forcing (W m\ :sup:`-2`) from aerosol-radiation
+        interactions from aviation
     """
     erf_out = np.ones_like(emissions) * np.nan
-    
+
     # we have the linear component
     erf_out[..., linear_emissions_indices] = (
         emissions[..., linear_emissions_indices]
         * linear_radiative_efficiency[..., linear_emissions_indices]
     ) * forcing_scaling
 
-    # then we add the nonlinear term 
+    # then we add the nonlinear term
     # we add this (arbitrarily) to the first nonlinear specie as we sum anyway,
     # and it's not directly attributable to any specie
     nonlinear_idx = np.where(nonlinear_emissions_indices)[0]
-    
+
     if len(nonlinear_idx) > 0:
         # first the multiplication of emissions
         interaction = np.prod(
@@ -56,7 +58,7 @@ def calculate_erfariavi_forcing(
             axis=SPECIES_AXIS,
             keepdims=True,
         )
-    
+
         # then the sum of the coefficients - they are zero by default and then
         # filled in the call
         interaction_coeff = np.sum(
@@ -64,18 +66,12 @@ def calculate_erfariavi_forcing(
             axis=SPECIES_AXIS,
             keepdims=True,
         )
-    
+
         # need to be sure if the linear term is nan for this specie we don't
         # lose the nonlinear term from "nan + x = nan"
         erf_out[..., nonlinear_idx[0]] = (
-            np.nan_to_num(
-                erf_out[..., nonlinear_idx[0]]
-            )
-            + (
-                interaction
-                * interaction_coeff
-                * forcing_scaling
-            )[..., 0]
+            np.nan_to_num(erf_out[..., nonlinear_idx[0]])
+            + (interaction * interaction_coeff * forcing_scaling)[..., 0]
         )
 
     return np.nansum(erf_out, axis=SPECIES_AXIS, keepdims=True)

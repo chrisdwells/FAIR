@@ -155,15 +155,10 @@ def test_ssp_emissions_cmip6_ebm3_calibrations():
             )
 
             if abs(erf_2015) > 1e-12 or abs(erf_2100) > 1e-12:
-                print(
-                    f"{specie:50s}"
-                    f"{erf_2015:15.10f}"
-                    f"{erf_2100:15.10f}"
-                )
+                print(f"{specie:50s}" f"{erf_2015:15.10f}" f"{erf_2100:15.10f}")
 
         except Exception:
             pass
-
 
     xr.testing.assert_allclose(expected_temperature, f.temperature[-1, ..., 0])
     xr.testing.assert_allclose(expected_co2_concentration, f.concentration[-1, ..., 2])

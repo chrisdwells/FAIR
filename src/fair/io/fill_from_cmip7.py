@@ -4,8 +4,8 @@ import copy
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
 import xarray as xr
+from scipy.interpolate import interp1d
 
 from ..exceptions import (
     DuplicateScenarioError,
@@ -256,23 +256,25 @@ def fill_from_rcmip_cmip7(self):
             "BC aviation": "BC",
             "Sulfur aviation": "Sulfur",
         }
-        
+
     species_to_rcmip_copy = copy.deepcopy(species_to_rcmip)
 
     for specie in species_to_rcmip_copy:
         if specie not in self.species:
             del species_to_rcmip[specie]
 
-    emissions_file = '../data/CMIP7/RCMIP/rcmip_phase3_emissions_ScenarioMIP_v1.1.5.csv'
-    concentration_file = '../data/CMIP7/RCMIP/rcmip_phase3_concentrations_ScenarioMIP_v1.1.5.csv'
-    forcing_file = '../data/CMIP7/RCMIP/rcmip_phase3_forcing_ScenarioMIP_v1.1.5.csv'
+    emissions_file = "../data/CMIP7/RCMIP/rcmip_phase3_emissions_ScenarioMIP_v1.1.5.csv"
+    concentration_file = (
+        "../data/CMIP7/RCMIP/rcmip_phase3_concentrations_ScenarioMIP_v1.1.5.csv"
+    )
+    forcing_file = "../data/CMIP7/RCMIP/rcmip_phase3_forcing_ScenarioMIP_v1.1.5.csv"
 
     df_emis = pd.read_csv(emissions_file)
     df_conc = pd.read_csv(concentration_file)
     df_forc = pd.read_csv(forcing_file)
-    
+
     ds_cmip7 = xr.open_dataset(
-    "../data/CMIP7/harmonised/harmonised_aviation_emissions.nc"
+        "../data/CMIP7/harmonised/harmonised_aviation_emissions.nc"
     )
 
     for scenario in self.scenarios:
@@ -280,21 +282,28 @@ def fill_from_rcmip_cmip7(self):
             if self.properties_df.loc[specie, "input_mode"] == "emissions":
                 # Grab raw emissions from dataframe
                 # aviation species override
-                
+
                 if self.aviation and specie in aviation_map:
                     nc_species = aviation_map[specie]
                     nc_scenario = scenario.replace("scen-", "").lower()
-                    
+
                     emis_in = (
-                            ds_cmip7[nc_species]
-                            .sel(scenario=nc_scenario,
-                            year=slice(1750, 2500),).values
-                            )
+                        ds_cmip7[nc_species]
+                        .sel(
+                            scenario=nc_scenario,
+                            year=slice(1750, 2500),
+                        )
+                        .values
+                    )
                 else:
                     emis_in = (
                         df_emis.loc[
                             (df_emis["Scenario"] == scenario)
-                            & (df_emis["Variable"].str.endswith("|" + specie_rcmip_name))
+                            & (
+                                df_emis["Variable"].str.endswith(
+                                    "|" + specie_rcmip_name
+                                )
+                            )
                             & (df_emis["Region"] == "World"),
                             "1750":"2500",
                         ]
@@ -456,20 +465,17 @@ def fill_from_rcmip_cmip7(self):
 
                 # fill FaIR xarray
                 fill(self.forcing, forc[:, None], specie=specie, scenario=scenario)
-                
+
         # if we have aviation-specific treatment on then we subtract
-        # from the general ones. this doesn't need to be done if the 
-        # aviation treatment isn't on, even for NOx aviation, as this 
+        # from the general ones. this doesn't need to be done if the
+        # aviation treatment isn't on, even for NOx aviation, as this
         # is only included in the other case to emulate contrails
-                
+
         if self.aviation:
             for aviation_species, parent_species in aviation_map.items():
-                if (
-                    aviation_species in self.species
-                    and parent_species in self.species
-                ):
+                if aviation_species in self.species and parent_species in self.species:
                     self.emissions.loc[
                         dict(specie=parent_species, scenario=scenario)
                     ] -= self.emissions.loc[
                         dict(specie=aviation_species, scenario=scenario)
-                    ]         
+                    ]
