@@ -250,6 +250,7 @@ def fill_from_rcmip_cmip7(self):
     species_to_rcmip["CO2 FFI"] = "CO2|Energy and Industrial Processes"
     species_to_rcmip["CO2 AFOLU"] = "CO2|AFOLU"
 
+    aviation_map = {}
     if self.aviation:
         aviation_map = {
             "NOx aviation": "NOx",
@@ -273,9 +274,8 @@ def fill_from_rcmip_cmip7(self):
     df_conc = pd.read_csv(concentration_file)
     df_forc = pd.read_csv(forcing_file)
 
-    ds_cmip7 = xr.open_dataset(
-        "../data/CMIP7/harmonised/harmonised_aviation_emissions.nc"
-    )
+    ds_all = xr.open_dataset("../data/aviation_emissions/aviation_emissions.nc")
+    ds_cmip7 = ds_all.sel(source="CMIP7")
 
     for scenario in self.scenarios:
         for specie, specie_rcmip_name in species_to_rcmip.items():
@@ -285,7 +285,7 @@ def fill_from_rcmip_cmip7(self):
 
                 if self.aviation and specie in aviation_map:
                     nc_species = aviation_map[specie]
-                    nc_scenario = scenario.replace("scen-", "").lower()
+                    nc_scenario = scenario.replace("scen7-", "").lower()
 
                     emis_in = (
                         ds_cmip7[nc_species]
@@ -343,23 +343,25 @@ def fill_from_rcmip_cmip7(self):
                 emis[self.timepoints > 2501] = np.nan
 
                 # Parse and possibly convert unit in input file to what FaIR wants
-                unit = df_emis.loc[
-                    (df_emis["Scenario"] == scenario)
-                    & (df_emis["Variable"].str.endswith("|" + specie_rcmip_name))
-                    & (df_emis["Region"] == "World"),
-                    "Unit",
-                ].values[0]
-                emis = emis * (
-                    prefix_convert[unit.split()[0]][
-                        desired_emissions_units[specie].split()[0]
-                    ]
-                    * compound_convert[unit.split()[1].split("/")[0]][
-                        desired_emissions_units[specie].split()[1].split("/")[0]
-                    ]
-                    * time_convert[unit.split()[1].split("/")[1]][
-                        desired_emissions_units[specie].split()[1].split("/")[1]
-                    ]
-                )  # * self.timestep
+                # but only if not aviation as those are treated separately
+                if specie not in aviation_map.keys():
+                    unit = df_emis.loc[
+                        (df_emis["Scenario"] == scenario)
+                        & (df_emis["Variable"].str.endswith("|" + specie_rcmip_name))
+                        & (df_emis["Region"] == "World"),
+                        "Unit",
+                    ].values[0]
+                    emis = emis * (
+                        prefix_convert[unit.split()[0]][
+                            desired_emissions_units[specie].split()[0]
+                        ]
+                        * compound_convert[unit.split()[1].split("/")[0]][
+                            desired_emissions_units[specie].split()[1].split("/")[0]
+                        ]
+                        * time_convert[unit.split()[1].split("/")[1]][
+                            desired_emissions_units[specie].split()[1].split("/")[1]
+                        ]
+                    )  # * self.timestep
 
                 # fill FaIR xarray
                 fill(self.emissions, emis[:, None], specie=specie, scenario=scenario)
